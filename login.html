@@ -12,8 +12,8 @@
   <label>Password: <input type="password" id="password"></label><br><br>
 
   <button onclick="login()">Login</button>
-  <button onclick="window.location.href='index.html'">Back to Homepage</button>
-  <button onclick="window.location.href='create-account.html'">Create Account</button>
+  <button onclick="window.location.href='/'">Back to Homepage</button>
+  <button onclick="window.location.href='/create-account'">Create Account</button>
 
   <script>
     function login() {
@@ -21,17 +21,42 @@
       const password = document.getElementById('password').value.trim();
 
       // Get stored user
-      const storedUser = JSON.parse(localStorage.getItem('user'));
+      //const storedUser = JSON.parse(localStorage.getItem('user'));
 
-      if (storedUser &&
-          storedUser.username === username &&
-          storedUser.password === password) {
-        alert(`Welcome, ${username}! Redirecting to homepage.`);
-        localStorage.setItem('loggedInUser', username); // Save login state
-        window.location.href = 'index.html';
-      } else {
-        alert('Invalid username or password.');
-      }
+      // if (storedUser &&
+      //     storedUser.username === username &&
+      //     storedUser.password === password) {
+      //   alert(`Welcome, ${username}! Redirecting to homepage.`);
+      //   localStorage.setItem('loggedInUser', username); // Save login state
+      //   window.location.href = '/';
+      // } else {
+      //   alert('Invalid username or password.');
+      //}
+
+      // Send login data to server for verification
+      // Wait for server response
+      // If successful, redirect to homepage
+      fetch('/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Invalid credentials');
+        }
+        return response.json();
+      })
+      .then(data => {
+        alert(`Welcome, ${data.username}! Redirecting to homepage.`);
+        window.location.href = '/';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Login failed: Invalid username or password.');
+      });
     }
   </script>
 </body>

@@ -13,7 +13,7 @@
   <label>Email: <input type="email" id="newEmail"></label><br><br>
 
   <button onclick="createAccount()">Create Account</button>
-  <button onclick="window.location.href='index.html'">Back to Homepage</button>
+  <button onclick="window.location.href='/'">Back to Homepage</button>
 
   <script>
     function createAccount() {
@@ -22,12 +22,33 @@
       const email = document.getElementById('newEmail').value.trim();
 
       if (username && password && email) {
-        // Save user to localStorage
         const userData = { username, password, email };
-        localStorage.setItem('user', JSON.stringify(userData));
 
-        alert('Account created successfully! Redirecting to login page.');
-        window.location.href = 'login.html';
+
+        //Save to localstorage
+        //localStorage.setItem('user', JSON.stringify(userData));
+
+
+        // Send user data to server
+        fetch('/create-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userData)
+        })
+        .then(response => {
+          // Wait for sql response
+          if (response.ok) {
+            alert('Account created successfully! Redirecting to login page.');
+            window.location.href = '/login';
+            return response.json();
+          }
+          throw new Error('Account creation failed.');
+        })
+
+        // alert('Account created successfully! Redirecting to login page.');
+        // window.location.href = '/login';
       } else {
         alert('Please fill in all fields.');
       }
