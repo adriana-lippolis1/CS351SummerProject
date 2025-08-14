@@ -13,18 +13,24 @@
 
   <button onclick="login()">Login</button>
   <button onclick="window.location.href='index.html'">Back to Homepage</button>
+  <button onclick="window.location.href='create-account.html'">Create Account</button>
 
   <script>
     function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      if (username && password) {
-        // Simulate successful login
-        alert('Login successful! Returning to homepage.');
+      // Get stored user
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+
+      if (storedUser &&
+          storedUser.username === username &&
+          storedUser.password === password) {
+        alert(`Welcome, ${username}! Redirecting to homepage.`);
+        localStorage.setItem('loggedInUser', username); // Save login state
         window.location.href = 'index.html';
       } else {
-        alert('Please fill in both fields.');
+        alert('Invalid username or password.');
       }
     }
   </script>

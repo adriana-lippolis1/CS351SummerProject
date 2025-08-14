@@ -5,9 +5,54 @@
   <title>Homepage</title>
 </head>
 <body>
-  <h1>Welcome to My Homepage</h1>
+  <h1 id="welcomeMsg">Welcome to My Homepage</h1>
   <p>This is a very basic homepage.</p>
 
   <button onclick="window.location.href='login.html'">Go to Login</button>
+  <button onclick="window.location.href='create-account.html'">Create Account</button>
+  <button id="adminLoginBtn">Sign in as Admin</button>
+
+
+  <div id="adminPanel" style="display:none; margin-top:20px; border:1px solid #de2020; padding:10px;">
+    <h2>Admin Controls</h2>
+    <p>You have access to admin-only features.</p>
+  </div>
+
+  <script>
+    const loggedInUser = localStorage.getItem('loggedInUser');
+  
+    if (loggedInUser) {
+      document.getElementById('welcomeMsg').textContent = `Welcome, ${loggedInUser}!`;
+      
+      // Reset userRole to 'user' if the logged-in account is not admin
+      if (loggedInUser !== 'admin') {
+        localStorage.setItem('userRole', 'user');
+      }
+    }
+  
+    const adminCredentials = { username: "admin", password: "admin123" };
+  
+    document.getElementById("adminLoginBtn").addEventListener("click", function () {
+      const username = prompt("Enter admin username:");
+      const password = prompt("Enter admin password:");
+  
+      if (username === adminCredentials.username && password === adminCredentials.password) {
+        alert("Admin login successful!");
+        localStorage.setItem('userRole', 'admin');
+        document.getElementById('adminPanel').style.display = 'block';
+      } else {
+        alert("Invalid admin credentials.");
+      }
+    });
+  
+    // Only show admin panel if role is explicitly admin
+    if (localStorage.getItem('userRole') === 'admin') {
+      document.getElementById('adminPanel').style.display = 'block';
+    } else {
+      document.getElementById('adminPanel').style.display = 'none';
+    }
+  </script>
+  
+  
 </body>
 </html>
