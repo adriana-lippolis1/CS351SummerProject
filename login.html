@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login Page</h1>
+  <p>Please enter your username and password.</p>
+
+  <label>Username: <input type="text" id="username"></label><br><br>
+  <label>Password: <input type="password" id="password"></label><br><br>
+
+  <button onclick="login()">Login</button>
+  <button onclick="window.location.href='index.html'">Back to Homepage</button>
+
+  <script>
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (username && password) {
+        // Simulate successful login
+        alert('Login successful! Returning to homepage.');
+        window.location.href = 'index.html';
+      } else {
+        alert('Please fill in both fields.');
+      }
+    }
+  </script>
+</body>
+</html>
