@@ -1,58 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Homepage</title>
-</head>
-<body>
-  <h1 id="welcomeMsg">Welcome to My Homepage</h1>
-  <p>This is a very basic homepage.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta charset="author" content="samantharobinson" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="style.css" type="text/css" rel="stylesheet" />
+    <title>Homepage</title>
+  </head>
+  <body>
+    <!-- Header -->
+    <header>
+      <div class="container header-container">
+        <div class="logo-header">
+          <a href="#" class="homepage-btn">Homepage</a>
+        </div>
 
-  <button onclick="window.location.href='login.html'">Go to Login</button>
-  <button onclick="window.location.href='create-account.html'">Create Account</button>
-  <button id="adminLoginBtn">Sign in as Admin</button>
+        <div class="header-actions">
+          <button id="openPostBtn" class="create-post-btn" title="Create Post">
+            <i class="fas fa-plus"></i>
+          </button>
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
 
+    <!-- Feed Section -->
+    <section class="feed">
+      <div class="container">
+        <div class="posts-container" id="postsContainer">
+          <!-- Posts will be injected here -->
+        </div>
+      </div>
+    </section>
 
-  <div id="adminPanel" style="display:none; margin-top:20px; border:1px solid #de2020; padding:10px;">
-    <h2>Admin Controls</h2>
-    <p>You have access to admin-only features.</p>
-  </div>
+    <!-- Modal for creating a post -->
+    <div id="createPostModal" class="modal">
+      <div class="modal-content">
+        <span id="closePostModal" class="close">&times;</span>
+        <h3>Create a Post</h3>
+        <form id="postForm">
+          <input type="text" id="postSubject" placeholder="Subject" required />
+          <textarea id="postContent" placeholder="Write your post..." required></textarea>
+          <button type="submit">Post</button>
+        </form>
+      </div>
+    </div>
 
-  <script>
-    const loggedInUser = localStorage.getItem('loggedInUser');
-  
-    if (loggedInUser) {
-      document.getElementById('welcomeMsg').textContent = `Welcome, ${loggedInUser}!`;
-      
-      // Reset userRole to 'user' if the logged-in account is not admin
-      if (loggedInUser !== 'admin') {
-        localStorage.setItem('userRole', 'user');
-      }
-    }
-  
-    const adminCredentials = { username: "admin", password: "admin123" };
-  
-    document.getElementById("adminLoginBtn").addEventListener("click", function () {
-      const username = prompt("Enter admin username:");
-      const password = prompt("Enter admin password:");
-  
-      if (username === adminCredentials.username && password === adminCredentials.password) {
-        alert("Admin login successful!");
-        localStorage.setItem('userRole', 'admin');
-        document.getElementById('adminPanel').style.display = 'block';
-      } else {
-        alert("Invalid admin credentials.");
-      }
-    });
-  
-    // Only show admin panel if role is explicitly admin
-    if (localStorage.getItem('userRole') === 'admin') {
-      document.getElementById('adminPanel').style.display = 'block';
-    } else {
-      document.getElementById('adminPanel').style.display = 'none';
-    }
-  </script>
-  
-  
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
