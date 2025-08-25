@@ -3,7 +3,10 @@ const path = require('path'); // Import the path module
 const mysql = require('mysql2');
 const app = express();
 
-const PORT = 3000;
+const bcrypt = require('bcrypt');
+const saltRounds = 10; // Number of salt rounds for bcrypt
+
+const PORT = 80;
 
 // Add middleware to parse JSON bodies
 app.use(express.json());
@@ -44,11 +47,12 @@ db.query(createTableQuery, (err, results) => {
 });
 
 // Example: API endpoint to create a new user
-app.post('/create-account', (req, res) => {
+app.post('/create-account', async (req, res) => {
   const { username, password, email } = req.body;
-  
+
+  const hPassword = await bcrypt.hash(password, saltRounds); // Hash the password
   const query = 'INSERT INTO users (username, password, email) VALUES (?, ?, ?)';
-  db.query(query, [username, password, email], (err, results) => {
+  db.query(query, [username, hPassword, email], (err, results) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -61,8 +65,8 @@ app.post('/create-account', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password} = req.body;
   
-const query = 'SELECT * FROM users WHERE username = ?';
-  db.query(query, [username], (err, results) => {
+  const query = 'SELECT * FROM users WHERE username = ?';
+  db.query(query, [username], async (err, results) => {
     if (err) {
       console.error('DB error during login:', err);
       return res.status(500).json({ error: 'Database error' });
@@ -75,7 +79,14 @@ const query = 'SELECT * FROM users WHERE username = ?';
     const user = results[0];
 
     // Compare plaintext passwords, use hashing later
-    if (user.password !== password) {
+    // if (user.password !== password) {
+    //   return res.status(401).json({ error: 'Invalid credentials' });
+    // }
+
+    const comp = await bcrypt.compare(password, user.password);
+    
+    // Compare plaintext passwords, use hashing later
+    if (!comp) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -97,9 +108,6 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// app.get('/create-account', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'create-account.html'));
-// });
 
 //Listen on the specified port
 app.listen(PORT, () => {
