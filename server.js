@@ -13,6 +13,7 @@ const app = express();
 
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const { create } = require('domain');
 const saltRounds = 10; // Number of salt rounds for bcrypt
 
 const PORT = 3000;
@@ -110,11 +111,78 @@ const createTableQueryPost = `
 // Execute the create table query for posts
 db.query(createTableQueryPost, (err, res) => {
   if (err) {
-    console.error('Error creating table:', err);
+    console.error('Error creating posts table:', err);
     return;
   }
   console.log('Posts table created or already exists');
 });
+
+// Create comments table query if it doesn't exist
+// Foreign key references posts(id) to link comments to posts, when a post is deleted its comments are also deleted
+const createTableQueryComment = `
+  CREATE TABLE IF NOT EXISTS comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    postId INT NOT NULL,
+    commenter VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    date VARCHAR(255) NOT NULL,
+    likes INT DEFAULT 0,
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE
+  )
+`;
+
+// Execute the create table query for comments
+db.query(createTableQueryComment, (err, res) => {
+  if (err) {
+    console.error('Error creating comments table:', err);
+    return;
+  }
+  console.log('Comments table created or already exists');  
+});
+
+// Create likes table query if it doesn't exist
+// To track which users have liked which posts, preventing multiple likes from the same user
+const createTableQueryLikePost = `
+  CREATE TABLE IF NOT EXISTS postLikes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    postId INT NOT NULL,
+    userId INT NOT NULL,
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_like (postId, userId) -- Ensure a user can like a post only once
+)
+`;
+
+// Execute the create table query for likes
+db.query(createTableQueryLikePost, (err, res) => {
+  if (err) {
+    console.error('Error creating likes table:', err);
+    return;
+  }
+  console.log('Likes table created or already exists');
+});
+
+// Create comment likes table query if it doesn't exist
+const createTableQueryLikeComment = `
+  CREATE TABLE IF NOT EXISTS commentLikes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commentId INT NOT NULL,
+    userId INT NOT NULL,
+    FOREIGN KEY (commentId) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_like (commentId, userId) -- Ensure a user can like a post only once
+)
+`;
+
+// Execute the create table query for likes
+db.query(createTableQueryLikeComment, (err, res) => {
+  if (err) {
+    console.error('Error creating comment likes table:', err); 
+    return;
+  }
+  console.log('Comment Likes table created or already exists');
+});
+
 //-------------------------------------------------------------------------------------------------------
 
 // API endpoints
@@ -227,6 +295,225 @@ app.get('/posts', (req, res) => {
     res.status(200).json(results);
   });
 });
+
+// Like a post
+// Push like to database
+app.post('/posts/:id/like', (req, res) => {
+  const postId = req.params.id;
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const username = req.session.user.username;
+
+  db.query('SELECT id FROM users WHERE username = ?', [username], (err, userResults) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error fetching user' });
+    }
+    if (userResults.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const userId = userResults[0].id;
+
+
+    // Check if user has already liked the post
+    const checkLikeQuery = 'SELECT * FROM postLikes WHERE postId = ? AND userId = ?';
+    db.query(checkLikeQuery, [postId, userId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error checking like' });
+      }
+      if (results.length > 0) {
+        // Remove like if already liked
+        const deleteLikeQuery = 'DELETE FROM postLikes WHERE postId = ? AND userId = ?';
+        db.query(deleteLikeQuery, [postId, userId], (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: 'Database error removing like' });
+          }
+          // Decrement like count in posts table
+          const updatePostQuery = 'UPDATE posts SET likes = likes - 1 WHERE id = ? AND likes > 0';
+          db.query(updatePostQuery, [postId], (err, results) => {
+            if (err) {
+              return res.status(500).json({ error: 'Database error updating post likes' });
+            }
+            return res.status(200).json({ message: 'Like removed' });
+          });
+        });
+        return;
+      }
+
+      // Insert like record
+      const insertLikeQuery = 'INSERT INTO postLikes (postId, userId) VALUES (?, ?)';
+      db.query(insertLikeQuery, [postId, userId], (err, results) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error inserting like' });
+        }
+
+        // Increment like count in posts table
+        const updatePostQuery = 'UPDATE posts SET likes = likes + 1 WHERE id = ?';
+        db.query(updatePostQuery, [postId], (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: 'Database error updating post likes' });
+          }
+          res.status(200).json({ message: 'Post liked' });
+        });
+      });
+    });
+  });
+});
+
+// Delete a post
+app.delete('/posts/:id', (req, res) => {
+  const postId = req.params.id;
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Ensure the user deleting the post is the original poster
+  const checkQuery = 'SELECT poster FROM posts WHERE id = ?';
+  db.query(checkQuery, [postId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error checking post' });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    if (results[0].poster !== req.session.user.username) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own posts' });
+    }
+
+    const deleteQuery = 'DELETE FROM posts WHERE id = ?';
+    db.query(deleteQuery, [postId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error deleting post' });
+      }
+      res.status(200).json({ message: 'Post deleted' });
+    });
+  });
+});
+
+// API endpoints for comments
+// Add a comment to a post
+app.post('/posts/:id/comments', (req, res) => {
+  const postId = req.params.id;
+  const { content, date } = req.body;
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const commenter = req.session.user.username;
+
+  const query = 'INSERT INTO comments (postId, commenter, content, date) VALUES (?, ?, ?, ?)';
+  db.query(query, [postId, commenter, content, date], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error creating comment' });
+    }
+    res.status(201).json({ message: 'Comment added', commentId: results.insertId });
+  });
+});
+
+// Get comments for a post
+app.get('/posts/:id/comments', (req, res) => {
+  const postId = req.params.id;
+  const query = 'SELECT * FROM comments WHERE postId = ? ORDER BY date DESC';
+  db.query(query, [postId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error fetching comments' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// Delete a comment
+app.delete('/posts/:postId/comments/:commentId', (req, res) => {
+  const { postId, commentId } = req.params;
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const username = req.session.user.username;
+  // Ensure the user deleting the comment is the original commenter
+  const checkQuery = 'SELECT commenter FROM comments WHERE id = ? AND postId = ?';
+  db.query(checkQuery, [commentId, postId], (err, results) => {
+    if (err) { 
+      return res.status(500).json({ error: 'Database error checking comment' });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+    if (results[0].commenter !== username) {
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own comments' });
+    }
+    const deleteQuery = 'DELETE FROM comments WHERE id = ? AND postId = ?';
+    db.query(deleteQuery, [commentId, postId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error deleting comment' });
+      }
+      res.status(200).json({ message: 'Comment deleted' });
+    });
+  });
+});
+
+
+// API endpoint to like a comment
+// Remove like if already liked, otherwise add like
+app.post('/posts/:postId/comments/:commentId/like', (req, res) => {
+  const { postId, commentId } = req.params;
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const username = req.session.user.username;
+  db.query('SELECT id FROM users WHERE username = ?', [username], (err, userResults) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error fetching user' });
+    }
+    if (userResults.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const userId = userResults[0].id;
+
+    // Check if user has already liked the comment
+    const checkLikeQuery = 'SELECT * FROM commentLikes WHERE commentId = ? AND userId = ?';
+    db.query(checkLikeQuery, [commentId, userId], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: 'Database error checking like' });
+      }
+      if (results.length > 0) {
+        // Remove like if already liked
+        const deleteLikeQuery = 'DELETE FROM commentLikes WHERE commentId = ? AND userId = ?';
+        db.query(deleteLikeQuery, [commentId, userId], (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: 'Database error removing like' });
+          }
+          // Decrement like count in comments table
+          const updateCommentQuery = 'UPDATE comments SET likes = likes - 1 WHERE id = ? AND likes > 0';
+          db.query(updateCommentQuery, [commentId], (err, results) => {
+            if (err) {
+              return res.status(500).json({ error: 'Database error updating comment likes' });
+            }
+            return res.status(200).json({ message: 'Like removed' });
+          });
+        });
+        return;
+      }
+
+      // Insert like record
+      const insertLikeQuery = 'INSERT INTO commentLikes (commentId, userId) VALUES (?, ?)';
+      db.query(insertLikeQuery, [commentId, userId], (err, results) => {
+        if (err) {
+          return res.status(500).json({ error: 'Database error inserting like' });
+        }
+
+        // Increment like count in comments table
+        const updateCommentQuery = 'UPDATE comments SET likes = likes + 1 WHERE id = ?';
+        db.query(updateCommentQuery, [commentId], (err, results) => {
+          if (err) {
+            return res.status(500).json({ error: 'Database error updating comment likes' });
+          }
+          res.status(200).json({ message: 'Comment liked' });
+        });
+      });
+    });
+  });
+});
+
+
 //-------------------------------------------------------------------------------------------------------
 
 // Serve HTML pages

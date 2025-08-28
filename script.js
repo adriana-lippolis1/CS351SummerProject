@@ -125,117 +125,183 @@ postForm.addEventListener("submit", (e) => {
   loadPosts();
 });
 
-// Load posts
-function loadPosts() {
+
+// Load and display posts with comments
+async function loadPosts() {
   postsContainer.innerHTML = "";
 
-  fetch('/posts')
-    .then(res => res.json())
-    .then(posts => {
-      posts.forEach(post => {
-        const postDiv = document.createElement("div");
-        postDiv.className = "post";
-        postDiv.dataset.id = post.postId; // match your DB column name
+  try {
+    const res = await fetch('/posts');
+    const posts = await res.json();
 
-        postDiv.innerHTML = `
-          <h4>${post.subject}</h4>
-          <p>${post.content}</p>
-          <span class="timestamp"><strong>${post.poster}</strong> ${post.date}</span>
-          <div>
-            <button class="like-post-btn" title="Like post">
-              <i class="fas fa-heart"></i> ${post.likes}
-            </button>
-            <button class="delete-post-btn" title="Delete post">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-          <div class="comment-section">
-            <!-- Comments could go here later -->
-          </div>
-        `;
-        postsContainer.append(postDiv);
-      });
-    })
-    .catch(err => {
-      console.error('Failed to load posts:', err);
-    });
+    // For each post, fetch comments asynchronously
+    const postElements = await Promise.all(posts.map(async (post) => {
+      let commentsHTML = '<div class="comment-section">';
+      
+      try {
+        const commentsRes = await fetch(`/posts/${post.id}/comments`);
+        const comments = await commentsRes.json();
+
+        comments.forEach((c, i) => {
+
+          const commentDiv = document.createElement("div");
+          commentDiv.className = "comment";
+          commentDiv.dataset.id = c.id;
+
+          commentsHTML += `
+            <div class="comment" data-comment-id="${c.id}">
+              <div>${c.content}</div>
+              <div><strong>${c.commenter}</strong> ${c.date}
+                <button class="like-comment-btn" data-post="${post.id}" data-comment="${i}">
+                  <i class="fas fa-heart"></i> ${c.likes}
+                </button>
+                <button class="delete-comment-btn" data-post="${post.id}" data-comment="${i}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>`;
+        });
+      } catch (err) {
+        console.error(`Failed to load comments for post ${post.id}:`, err);
+      }
+
+      commentsHTML += `
+        <form class="comment-form" data-id="${post.id}">
+          <input type="text" placeholder="Add a comment..." required />
+          <button type="submit">Comment</button>
+        </form>
+      </div>`;
+
+      // Create post div with full HTML including comments
+      const postDiv = document.createElement("div");
+      postDiv.className = "post";
+      postDiv.dataset.id = post.id;
+
+      postDiv.innerHTML = `
+        <h4>${post.subject}</h4>
+        <p>${post.content}</p>
+        <span class="timestamp"><strong>${post.poster}</strong> ${post.date}</span>
+        <div>
+          <button class="like-post-btn" title="Like post">
+            <i class="fas fa-heart"></i> ${post.likes}
+          </button>
+          <button class="delete-post-btn" title="Delete post">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        ${commentsHTML}
+      `;
+
+      return postDiv;
+    }));
+
+    // Append all posts with comments to container
+    postElements.forEach(postEl => postsContainer.append(postEl));
+    
+  } catch (err) {
+    console.error('Failed to load posts:', err);
+  }
 }
 
-// // Event delegation for likes, deletes, comments
-// postsContainer.addEventListener("click", (e) => {
-//   const postDiv = e.target.closest(".post");
-//   if (!postDiv) return;
-//   const postId = parseInt(postDiv.dataset.id);
-//   let posts = JSON.parse(localStorage.getItem("posts")) || [];
-//   const post = posts.find(p => p.id === postId);
-//   if (!post) return;
 
-//   // Delete post
-//   if (e.target.closest(".delete-post-btn")) {
-//     posts = posts.filter(p => p.id !== postId);
-//     localStorage.setItem("posts", JSON.stringify(posts));
-//     loadPosts();
-//   }
+// Event delegation for likes, deletes, comments
+postsContainer.addEventListener("click", (e) => {
+  const postDiv = e.target.closest(".post");
+  if (!postDiv) return;
 
-//   // Like post
-//   if (e.target.closest(".like-post-btn")) {
-//     if (!post.liked) {
-//       post.likes++;
-//       post.liked = true;
-//     } else {
-//       post.likes--;
-//       post.liked = false;
-//     }
-//     localStorage.setItem("posts", JSON.stringify(posts));
-//     loadPosts();
-//   }
+  // Get post id
+  const postId = parseInt(postDiv.dataset.id);
 
-//   // Like comment
-//   if (e.target.closest(".like-comment-btn")) {
-//     const btn = e.target.closest(".like-comment-btn");
-//     const idx = parseInt(btn.dataset.comment);
-//     if (!post.comments[idx].liked) {
-//       post.comments[idx].likes++;
-//       post.comments[idx].liked = true;
-//     } else {
-//       post.comments[idx].likes--;
-//       post.comments[idx].liked = false;
-//     }
-//     localStorage.setItem("posts", JSON.stringify(posts));
-//     loadPosts();
-//   }
+  // Delete post
+  if (e.target.closest(".delete-post-btn")) {
+    // Send request to server to delete post, using postId and session user
+    fetch(`/posts/${postId}`, { 
+      method: 'DELETE', 
+      body: JSON.stringify({ username: currentUser.username }),
+      headers: { 'Content-Type': 'application/json' }})
+      .then(res => {
+        if (res.ok) {
+          alert('Post deleted');
+        } else {
+          alert('Failed to delete post');
+        }
+        loadPosts();
+      });
+  }
 
-//   // Delete comment
-//   if (e.target.closest(".delete-comment-btn")) {
-//     const btn = e.target.closest(".delete-comment-btn");
-//     const idx = parseInt(btn.dataset.comment);
-//     post.comments.splice(idx, 1);
-//     localStorage.setItem("posts", JSON.stringify(posts));
-//     loadPosts();
-//   }
-// });
+  // Like post
+  if (e.target.closest(".like-post-btn")) {
+    // Send request to server to like post, using postId and session user
+    // If a post is already liked by this user, unlike it
+    fetch(`/posts/${postId}/like`, { method: 'POST', })
+      .then(res => {
+        if (res.ok) {
+          //alert('Post liked');
+        } else {
+          alert('Failed to like post');
+        }
+        loadPosts();
+      });
+  }
 
-// // Comment form submission
-// postsContainer.addEventListener("submit", (e) => {
-//   e.preventDefault();
-//   const form = e.target.closest(".comment-form");
-//   if (!form) return;
-//   const postId = parseInt(form.dataset.id);
-//   const input = form.querySelector("input");
-//   if (!input.value.trim()) return;
-//   let posts = JSON.parse(localStorage.getItem("posts")) || [];
-//   const post = posts.find(p => p.id === postId);
-//   post.comments.push({
-//     commenter: currentUser.username, // use logged-in user
-//     text: input.value,
-//     date: new Date().toLocaleString(),
-//     likes: 0,
-//     liked: false
-//   });
-//   localStorage.setItem("posts", JSON.stringify(posts));
-//   input.value = "";
-//   loadPosts();
-// });
+  // Like comment
+  if (e.target.closest(".like-comment-btn")) {
+    const commentDiv = e.target.closest(".comment");
+    const commentId = commentDiv?.dataset.commentId;
+    fetch(`/posts/${postId}/comments/${commentId}/like`, { method: 'POST' })
+      .then(res => {
+        if (res.ok) {
+          //alert('Comment liked');
+        } else {
+          alert('Failed to like comment');
+        }
+        loadPosts();
+      });
+  }
+
+  // Delete comment
+  if (e.target.closest(".delete-comment-btn")) {
+    const commentDiv = e.target.closest(".comment");
+    const commentId = commentDiv?.dataset.commentId;
+    console.log("Deleting comment:", commentId);
+    fetch(`/posts/${postId}/comments/${commentId}`, { 
+      method: 'DELETE', 
+      body: JSON.stringify({ username: currentUser.username }),
+      headers: { 'Content-Type': 'application/json' }})
+      .then(res => {
+        if (res.ok) {
+          alert('Comment deleted');
+        } else {
+          alert('Failed to delete comment');
+        }
+        loadPosts();
+      });
+  }
+});
+
+// Comment form submission
+postsContainer.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target.closest(".comment-form");
+  if (!form) return;
+
+  const postId = parseInt(form.dataset.id);
+  const input = form.querySelector("input");
+
+  fetch(`/posts/${postId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: input.value, date: new Date().toLocaleString() })
+  }).then(res => {
+    if (res.ok) {
+      alert('Comment added');
+    } else {
+      alert('Failed to add comment');
+    }
+    loadPosts();
+  });
+  input.value = "";
+});
 
 // Initial load
 loadPosts();
