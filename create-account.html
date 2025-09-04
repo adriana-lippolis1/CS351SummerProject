@@ -26,7 +26,6 @@
         const userData = { username, password, email };
         localStorage.setItem('user', JSON.stringify(userData));
 
-        alert('Account created successfully! Redirecting to login page.');
         window.location.href = 'login.html';
       } else {
         alert('Please fill in all fields.');

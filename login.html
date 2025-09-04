@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,7 +14,7 @@
   <header>
     <div class="container header-container">
       <div class="logo-header">
-        <a href="#" class="homepage-btn">Login & Register</a>
+        <a href="/" class="homepage-btn">Homepage</a>
       </div>
     </div>
   </header>
@@ -22,7 +22,7 @@
   <section class="login-section">
     <div class="container login-container">
       <h2>Welcome</h2>
-      
+
       <!-- Registration Form -->
       <form id="registerForm">
         <h3>Register</h3>
@@ -44,43 +44,5 @@
   </section>
 
   <script src="/script.js"></script>
-
-  <!-- <script>
-    const regForm = document.getElementById("registerForm");
-    const loginForm = document.getElementById("loginForm");
-
-    regForm.addEventListener("submit", e => {
-      e.preventDefault();
-      const name = document.getElementById("regName").value.trim();
-      const username = document.getElementById("regUsername").value.trim();
-      const email = document.getElementById("regEmail").value.trim();
-      const password = document.getElementById("regPassword").value;
-
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-      if (users.find(u => u.username === username)) {
-        alert("Username already exists!");
-        return;
-      }
-      users.push({ name, username, email, password });
-      localStorage.setItem("users", JSON.stringify(users));
-      alert("Registration successful! You can now log in.");
-      regForm.reset();
-    });
-
-    loginForm.addEventListener("submit", e => {
-      e.preventDefault();
-      const username = document.getElementById("loginUsername").value.trim();
-      const password = document.getElementById("loginPassword").value;
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-      const user = users.find(u => u.username === username && u.password === password);
-      if (!user) {
-        alert("Invalid username or password!");
-        return;
-      }
-      localStorage.setItem("loggedInUser", JSON.stringify(user));
-      window.location.href = "index.html";
-    });
-  </script> -->
 </body>
 </html>
-

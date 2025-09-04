@@ -31,6 +31,11 @@ header {
   color: #000;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
 .header-actions button {
   margin-left: 10px;
   padding: 6px 12px;
@@ -40,57 +45,50 @@ header {
   font-size: 14px;
 }
 
+.user-badge {
+  display: inline-block;
+  margin-right: 10px;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
 .create-post-btn {
   background-color: #007bff;
   color: white;
 }
-
-.create-post-btn:hover {
-  background-color: #0056b3;
-}
+.create-post-btn:hover { background-color: #0056b3; }
 
 .logout-btn {
   background-color: #ff4d4d;
   color: white;
 }
+.logout-btn:hover { background-color: #cc0000; }
 
-.logout-btn:hover {
-  background-color: #cc0000;
-}
-
-/* Feed Section */
-.feed {
-  margin-top: 20px;
-}
+/* Feed */
+.feed { margin-top: 20px; }
 
 .posts-container {
   max-width: 700px;
   margin: 0 auto;
 }
 
-/* Post Styles */
+/* Post card */
 .post {
   background: white;
   margin: 20px 0;
   padding: 15px;
   border-radius: 8px;
   word-wrap: break-word;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
+.post h4 { font-size: 20px; margin-bottom: 8px; }
+.post p { margin-bottom: 8px; font-size: 16px; }
 
-.post h4 {
-  font-size: 20px;
-  margin-bottom: 8px;
-}
-
-.post p {
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-.timestamp {
-  font-size: 12px;
-  color: #666;
-}
+.timestamp { font-size: 12px; color: #666; }
 
 .like-post-btn, .delete-post-btn, .like-comment-btn, .delete-comment-btn {
   padding: 5px 8px;
@@ -101,32 +99,33 @@ header {
   font-size: 14px;
   color: #ff4d4d;
 }
+.like-post-btn.liked { color: #e0245e; }
 
-.like-post-btn.liked {
-  color: #e0245e;
+/* Optional admin tag (safe even if backend doesn’t expose admin) */
+.admin-tag {
+  display: inline-block;
+  font-size: 12px;
+  color: #a15c00;
+  background: #fff4e0;
+  border: 1px solid #f0c27b;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
 }
 
-/* Comment Section */
+/* Comments */
 .comment-section {
   margin-top: 12px;
   border-top: 1px solid #eee;
   padding-top: 8px;
 }
-
-.comment {
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.comment strong, .comment .timestamp {
-  margin-right: 6px;
-}
+.comment { margin-bottom: 6px; font-size: 14px; }
+.comment strong, .comment .timestamp { margin-right: 6px; }
 
 .comment-form {
   display: flex;
   margin-top: 8px;
 }
-
 .comment-form input {
   flex: 1;
   padding: 6px;
@@ -134,7 +133,6 @@ header {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
-
 .comment-form button {
   padding: 6px 12px;
   border-radius: 5px;
@@ -143,24 +141,18 @@ header {
   color: white;
   cursor: pointer;
 }
-
-.comment-form button:hover {
-  background-color: #0056b3;
-}
+.comment-form button:hover { background-color: #0056b3; }
 
 /* Modal */
 .modal {
   display: none;
   position: fixed;
   z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
   overflow: auto;
   background-color: rgba(0,0,0,0.5);
 }
-
 .modal-content {
   background-color: #fefefe;
   margin: 10% auto;
@@ -168,39 +160,25 @@ header {
   border-radius: 8px;
   width: 90%;
   max-width: 400px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
+.close { float: right; font-size: 28px; cursor: pointer; }
+.close:hover { color: black; }
 
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-.close:hover {
-  color: black;
-}
-
-/* Post Form Styles */
+/* Post form fields */
 #postForm {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-#postForm input, 
-#postForm textarea {
+#postForm input, #postForm textarea {
   width: 100%;
   padding: 8px;
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
 }
-
-#postForm textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
+#postForm textarea { min-height: 100px; resize: vertical; }
 #postForm button {
   padding: 10px;
   border: none;
@@ -210,44 +188,35 @@ header {
   font-size: 14px;
   cursor: pointer;
 }
+#postForm button:hover { background-color: #0056b3; }
 
-#postForm button:hover {
-  background-color: #0056b3;
-}
-
-/* Login Page Styling */
-.login-section {
-  margin-top: 40px;
-}
-
+/* Login page card */
+.login-section { margin-top: 40px; }
 .login-container {
-  max-width: 400px;
+  max-width: 420px;
   margin: 0 auto;
   background: white;
-  padding: 20px 25px;
+  padding: 22px 26px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
-
 .login-container h2 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   font-weight: 700;
 }
-
 .login-container form {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 10px;
 }
-
 .login-container input {
   padding: 8px;
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
 }
-
 .login-container button {
   padding: 10px;
   border: none;
@@ -257,13 +226,28 @@ header {
   font-size: 14px;
   cursor: pointer;
 }
+.login-container button:hover { background-color: #0056b3; }
+.login-container h3 { margin-top: 10px; font-size: 18px; font-weight: 600; }
 
-.login-container button:hover {
-  background-color: #0056b3;
+.admin-tag {
+  display: inline-block;
+  font-size: 12px;
+  color: #a15c00;
+  background: #fff4e0;
+  border: 1px solid #f0c27b;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
 }
 
-.login-container h3 {
-  margin-top: 15px;
-  font-size: 18px;
-  font-weight: 600;
+
+.edited-tag {
+  display: block;       
+  color: #6c2bd9;
+  font-style: italic;
 }
+
+.edited-tag .admin-name {
+  font-weight: 900;
+}
+

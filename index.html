@@ -20,14 +20,15 @@
     <header>
       <div class="container header-container">
         <div class="logo-header">
-          <a href="#" class="homepage-btn">Homepage</a>
+          <a href="/" class="homepage-btn">Homepage</a>
         </div>
 
-        <div class="header-actions">
-          <button id="openPostBtn" class="create-post-btn" title="Create Post">
+        <div class="header-actions" id="headerActions">
+          <span id="userBadge" class="user-badge" style="display:none"></span>
+          <button id="openPostBtn" class="create-post-btn" title="Create Post" style="display:none">
             <i class="fas fa-plus"></i>
           </button>
-          <button id="logoutBtn" class="logout-btn">Logout</button>
+          <button id="logoutBtn" class="logout-btn" style="display:none">Logout</button>
         </div>
       </div>
     </header>
@@ -36,7 +37,7 @@
     <section class="feed">
       <div class="container">
         <div class="posts-container" id="postsContainer">
-          <!-- Posts will be injected here -->
+          <!-- Posts injected here -->
         </div>
       </div>
     </section>
