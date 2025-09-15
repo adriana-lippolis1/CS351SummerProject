@@ -190,6 +190,12 @@ app.post('/logout', (req, res) => {
 app.post('/posts', requireAuth, (req, res) => {
   const { subject, content, date } = req.body;
   const poster = req.session.user.username;
+
+  // Adriana Added this 4:32pm on 9/15
+  if (subject.length > 255) {
+    return res.status(400).json({ error: 'Subject too long (max 255 characters)' });
+  }
+
   const q = 'INSERT INTO posts (subject, content, date, poster, likes) VALUES (?, ?, ?, ?, 0)';
   db.query(q, [subject, content, date, poster], (e, result) => {
     if (e) return res.status(500).json({ error: 'Database error creating post' });
@@ -202,6 +208,7 @@ app.put('/posts/:id', requireAuth, (req, res) => {
   const postId = req.params.id;
   const { subject, content } = req.body;
   const { username, admin } = req.session.user;
+
 
   // allow edit if admin or poster
   const select = 'SELECT poster FROM posts WHERE id = ?';
