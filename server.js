@@ -28,12 +28,9 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html'))
 //-------------------------------------------------------------------------------------------------------
 // DB connection
 //-------------------------------------------------------------------------------------------------------
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'zmelosh',
-  password: 'admin',
-  database: 'cs351db'
-});
+const config = require('./config');  // <--- new line
+
+const db = mysql.createConnection(config.db);
 
 db.connect(err => {
   if (err) {
@@ -42,6 +39,14 @@ db.connect(err => {
   }
   console.log('Connected to database successfully');
 });
+
+app.use(session({
+  secret: config.sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }  // set true if HTTPS
+}));
+
 
 //-------------------------------------------------------------------------------------------------------
 // Schema (create if not exists + make sure columns exist)
