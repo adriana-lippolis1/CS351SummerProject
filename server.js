@@ -214,6 +214,11 @@ app.put('/posts/:id', requireAuth, (req, res) => {
   const { subject, content } = req.body;
   const { username, admin } = req.session.user;
 
+  // Zach Added this on 9/15
+  if (subject.length > 255) {
+    return res.status(400).json({ error: 'Subject too long (max 255 characters)' });
+  }
+
 
   // allow edit if admin or poster
   const select = 'SELECT poster FROM posts WHERE id = ?';
